@@ -189,3 +189,44 @@
         (map-set property-market-status asset-id true)
         (ok true)))
 
+(define-public (withdraw-property-listing (asset-id uint))
+    ;; Removes property from market
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (map-set property-market-status asset-id false)
+        (ok true)))
+
+(define-public (remove-from-marketplace (asset-id uint))
+;; Removes a property from the marketplace
+(begin
+    (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+    (map-set property-market-status asset-id false)
+    (ok true)))
+
+;; -------------------------------
+;; Property Data Management Functions
+;; -------------------------------
+
+(define-public (update-property-metadata (asset-id uint) (metadata (string-ascii 256)))
+    ;; Updates the metadata for an existing property
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (asserts! (validate-metadata metadata) error-property-metadata-invalid)
+        (map-set property-metadata asset-id metadata)
+        (ok true)))
+
+(define-public (set-property-classification (asset-id uint) (classification (string-ascii 50)))
+;; Assigns a classification to a property
+(begin
+    (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+    (asserts! (>= (len classification) u1) error-property-metadata-invalid)
+    (map-set property-classification asset-id classification)
+    (ok true)))
+
+(define-public (set-property-coordinates (asset-id uint) (location (string-ascii 100)))
+;; Sets the location details for a property
+(begin
+    (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+    (asserts! (>= (len location) u1) error-property-metadata-invalid)
+    (map-set property-coordinates asset-id location)
+    (ok true)))
