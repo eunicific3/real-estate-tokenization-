@@ -144,3 +144,48 @@
     (let ((registration-results 
         (map create-property-record property-descriptions)))
         (ok registration-results))))
+
+;; -------------------------------
+;; Property Transfer Functions
+;; -------------------------------
+
+(define-public (execute-property-transfer (asset-id uint) (new-owner principal))
+    ;; Transfers property ownership to a new owner
+    (begin
+        (let ((current-owner (unwrap! (map-get? property-holder asset-id) error-property-unknown)))
+            (asserts! (is-eq tx-sender current-owner) error-unauthorized-property-action)
+
+            (let ((is-locked (default-to false (map-get? property-transfer-status asset-id))))
+                (asserts! (not is-locked) error-property-locked))
+
+            (asserts! (is-eq new-owner new-owner) error-recipient-invalid)
+            (map-set property-holder asset-id new-owner)
+            (map-set property-transfer-status asset-id true)
+            (ok true))))
+
+(define-public (lock-property-transfers (asset-id uint))
+;; Prevents further transfers of a property
+(begin
+    (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+    (map-set property-transfer-status asset-id true)
+    (ok true)))
+
+(define-public (unlock-property-transfers (asset-id uint))
+;; Enables transfers for a previously locked property
+(begin
+    (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+    (map-set property-transfer-status asset-id false)
+    (map-set property-market-status asset-id true)
+    (ok true)))
+
+;; -------------------------------
+;; Property Listing Functions
+;; -------------------------------
+
+(define-public (publish-property-listing (asset-id uint))
+    ;; Makes a property available for sale
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (map-set property-market-status asset-id true)
+        (ok true)))
+
