@@ -443,3 +443,113 @@
         (asserts! (not (is-eq current-owner recipient)) error-recipient-invalid))
     (ok true)))
 
+(define-public (check-insurance-status (asset-id uint))
+;; Validates property insurance status
+(ok (default-to false (map-get? property-has-insurance asset-id))))
+
+(define-public (resolve-property-not-found (asset-id uint))
+;; Resolves issues with property identification
+(begin
+    (let ((owner (unwrap! (map-get? property-holder asset-id) error-property-unknown)))
+        (ok owner))))
+
+(define-public (correct-transfer-error (asset-id uint) (recipient principal))
+;; Corrects transfer errors by validating recipient
+(begin
+    (asserts! (is-eq recipient recipient) error-recipient-invalid)
+    (ok "Transfer correction successful")))
+
+;; -------------------------------
+;; Advanced Property Functions
+;; -------------------------------
+
+(define-public (verify-documents 
+    (asset-id uint) 
+    (doc-hash (buff 32)))
+    ;; Verifies property document authenticity
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok (is-eq doc-hash doc-hash))))
+
+(define-public (book-property 
+    (asset-id uint) 
+    (check-in uint) 
+    (check-out uint))
+    ;; Manages property booking schedule
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok true)))
+
+(define-public (report-damage 
+    (asset-id uint) 
+    (damage-category (string-ascii 50)) 
+    (impact-level uint))
+    ;; Records property damage incidents
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok impact-level)))
+
+(define-public (monitor-value-growth 
+    (asset-id uint) 
+    (present-value uint) 
+    (growth-rate uint))
+    ;; Tracks property value growth
+    (begin
+        (asserts! (is-eq tx-sender admin-address) error-admin-only)
+        (ok growth-rate)))
+
+(define-public (record-access-event 
+    (asset-id uint) 
+    (visitor principal) 
+    (timestamp uint))
+    ;; Logs property access events
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok timestamp)))
+
+(define-public (generate-audit-record 
+    (asset-id uint) 
+    (event-type (string-ascii 50)) 
+    (event-details (string-ascii 256)))
+    ;; Creates audit records for property actions
+    (begin
+        (asserts! (is-eq tx-sender admin-address) error-admin-only)
+        (ok true)))
+
+(define-public (project-investment-returns 
+    (asset-id uint) 
+    (investment-term uint))
+    ;; Calculates property investment returns
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok investment-term)))
+
+(define-public (evaluate-property-condition 
+    (asset-id uint) 
+    (condition-rating uint) 
+    (inspection-notes (string-ascii 256)))
+    ;; Records property condition assessments
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok condition-rating)))
+
+(define-public (retrieve-maintenance-record (asset-id uint) (record-id uint))
+    ;; Fetches maintenance history for a property
+    (ok (map-get? property-upkeep-record {asset-id: asset-id, record-id: record-id})))
+
+(define-public (update-land-use (asset-id uint) (zoning-info (string-ascii 50)))
+    ;; Updates zoning information for a property
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (asserts! (validate-metadata zoning-info) error-property-metadata-invalid)
+        (map-set property-land-use asset-id zoning-info)
+        (ok true)))
+
+(define-public (get-maintenance-record (asset-id uint) (record-id uint))
+    ;; Retrieves a specific maintenance record
+    (ok (map-get? property-upkeep-record {asset-id: asset-id, record-id: record-id})))
+
+(define-public (get-tax-assessment (asset-id uint))
+    ;; Retrieves the tax assessment for a property
+    (ok (map-get? property-annual-tax asset-id)))
+
