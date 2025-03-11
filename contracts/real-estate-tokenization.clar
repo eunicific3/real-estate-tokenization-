@@ -230,3 +230,54 @@
     (asserts! (>= (len location) u1) error-property-metadata-invalid)
     (map-set property-coordinates asset-id location)
     (ok true)))
+
+(define-public (set-property-land-use (asset-id uint) (zoning-info (string-ascii 50)))
+    ;; Updates the zoning information for a property
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (asserts! (>= (len zoning-info) u1) error-property-metadata-invalid)
+        (map-set property-land-use asset-id zoning-info)
+        (ok true)))
+
+(define-public (remove-property-insurance (asset-id uint))
+    ;; Removes insurance coverage from a property
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (map-set property-has-insurance asset-id false)
+        (map-set property-insurer asset-id "")
+        (ok true)))
+
+;; -------------------------------
+;; Property Information Retrieval
+;; -------------------------------
+
+(define-public (get-current-property-owner (asset-id uint))
+    ;; Retrieves the current owner's address for a property
+    (ok (map-get? property-holder asset-id)))
+
+(define-public (get-property-details (asset-id uint))
+    ;; Retrieves the stored metadata for a property
+    (ok (map-get? property-metadata asset-id)))
+
+(define-public (validate-claimed-ownership (asset-id uint) (claimed-owner principal))
+;; Validates if the claimed owner matches the actual property owner
+(let ((actual-owner (unwrap! (map-get? property-holder asset-id) error-property-unknown)))
+    (ok (is-eq actual-owner claimed-owner))))
+
+(define-public (get-property-metadata-length (asset-id uint))
+;; Returns the length of the property metadata string
+(ok (len (unwrap! (map-get? property-metadata asset-id) error-property-unknown))))
+
+(define-public (check-transfer-status (asset-id uint))
+    ;; Fetches the transfer status for a property
+    (ok (map-get? property-transfer-status asset-id)))
+
+(define-public (check-transfer-eligibility (asset-id uint))
+    ;; Checks if a property is eligible for transfer
+    (ok (and (not (default-to false (map-get? property-transfer-status asset-id)))
+             (is-some (map-get? property-holder asset-id)))))
+
+(define-public (fetch-owner-by-property-id (asset-id uint))
+    ;; Retrieves the owner address for a property
+    (ok (map-get? property-holder asset-id)))
+
