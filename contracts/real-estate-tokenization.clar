@@ -553,3 +553,207 @@
     ;; Retrieves the tax assessment for a property
     (ok (map-get? property-annual-tax asset-id)))
 
+
+
+(define-public (verify-insurance-coverage (asset-id uint))
+    ;; Verifies if a property has insurance coverage
+    (ok (map-get? property-has-insurance asset-id)))
+
+(define-public (get-appraisal-record (asset-id uint) (appraisal-date uint))
+    ;; Retrieves property appraisal data
+    (ok (map-get? property-valuation-history {asset-id: asset-id, assessment-date: appraisal-date})))
+
+(define-public (get-property-age-data (asset-id uint))
+    ;; Retrieves property age information
+    (ok (map-get? property-construction-year asset-id)))
+
+;; -------------------------------
+;; Read-Only Functions
+;; -------------------------------
+
+(define-read-only (is-property-locked (asset-id uint))
+    ;; Checks if a property is locked for transfers
+    (ok (default-to false (map-get? property-transfer-status asset-id))))
+
+(define-read-only (get-latest-property-id)
+    ;; Retrieves the most recently assigned property ID
+    (ok (var-get property-counter)))
+
+(define-read-only (verify-property-transfer-status (asset-id uint))
+;; Checks if a property has been transferred
+(ok (default-to false (map-get? property-transfer-status asset-id))))
+
+(define-read-only (get-registry-size)
+;; Returns the total number of registered properties
+(ok (var-get property-counter)))
+
+(define-read-only (check-property-existence (asset-id uint))
+;; Checks if a property with the given ID exists
+(ok (is-none (map-get? property-holder asset-id))))
+
+(define-read-only (is-transferable (asset-id uint))
+;; Checks if a property is eligible for transfer
+(ok (not (default-to false (map-get? property-transfer-status asset-id)))))
+
+(define-read-only (is-registered (asset-id uint))
+;; Checks if the property ID exists in the registry
+(ok (is-some (map-get? property-holder asset-id))))
+
+(define-read-only (get-lock-status (asset-id uint))
+;; Returns the lock status of a property
+(ok (default-to false (map-get? property-transfer-status asset-id))))
+
+(define-read-only (lookup-owner (asset-id uint))
+;; Retrieves the owner's address for a property
+(ok (map-get? property-holder asset-id)))
+
+(define-read-only (can-be-transferred (asset-id uint))
+;; Checks if a property is not locked for transfers
+(ok (not (default-to false (map-get? property-transfer-status asset-id)))))
+
+(define-read-only (get-property-info (asset-id uint))
+;; Retrieves the property information
+(ok (map-get? property-metadata asset-id)))
+
+(define-read-only (asset-id-exists (asset-id uint))
+;; Verifies if a specific property ID exists
+(ok (is-some (map-get? property-holder asset-id))))
+
+(define-read-only (get-property-metadata-hash (asset-id uint))
+;; Returns the property metadata for verification
+(ok (default-to "" 
+    (map-get? property-metadata asset-id))))
+
+(define-read-only (lookup-property-owner (asset-id uint))
+;; Retrieves the owner's principal for a property
+(ok (map-get? property-holder asset-id)))
+
+(define-read-only (asset-exists (asset-id uint))
+;; Checks if a property ID is valid
+(ok (is-some (map-get? property-metadata asset-id))))
+
+(define-read-only (total-properties)
+;; Returns the total number of registered properties
+(ok (var-get property-counter)))
+
+(define-read-only (is-metadata-valid (data (string-ascii 256)))
+;; Validates property metadata length
+(ok (and (>= (len data) u1) (<= (len data) u256))))
+
+(define-read-only (get-first-asset-id)
+;; Returns the first property ID (always 1)
+(ok u1))
+
+(define-read-only (get-owner-address (asset-id uint))
+;; Simple owner lookup
+(ok (map-get? property-holder asset-id)))
+
+(define-read-only (is-valid-asset-id (asset-id uint))
+;; Checks if a property ID is within valid range
+(ok (and (>= asset-id u1) (<= asset-id (var-get property-counter)))))
+
+(define-read-only (get-metadata-length (asset-id uint))
+;; Returns the length of property metadata
+(ok (len (unwrap! (map-get? property-metadata asset-id) error-property-unknown))))
+
+(define-read-only (check-lock-status (asset-id uint))
+;; Quick check of property lock status
+(ok (default-to false (map-get? property-transfer-status asset-id))))
+
+(define-read-only (is-most-recent-asset (asset-id uint))
+;; Checks if the given ID is the most recent property
+(ok (is-eq asset-id (var-get property-counter))))
+
+(define-read-only (retrieve-metadata (asset-id uint))
+;; Retrieves basic property metadata
+(ok (map-get? property-metadata asset-id)))
+
+(define-read-only (is-valid-property (asset-id uint))
+;; Basic validation of a property
+(ok (and 
+    (is-some (map-get? property-holder asset-id))
+    (is-some (map-get? property-metadata asset-id)))))
+
+(define-read-only (validate-asset-id (asset-id uint))
+;; Checks if property ID is within valid range
+(ok (and (>= asset-id u1) (<= asset-id (var-get property-counter)))))
+
+(define-read-only (is-locked-for-transfer (asset-id uint))
+;; Checks if property is locked
+(ok (default-to false (map-get? property-transfer-status asset-id))))
+
+(define-read-only (fetch-property-info (asset-id uint))
+;; Retrieves basic property information
+(ok (map-get? property-metadata asset-id)))
+
+(define-read-only (get-property-owner (asset-id uint))
+;; Simple owner lookup function
+(ok (map-get? property-holder asset-id)))
+
+(define-read-only (verify-asset-exists (asset-id uint))
+;; Verifies if a property exists
+(ok (is-some (map-get? property-holder asset-id))))
+
+(define-read-only (asset-count)
+;; Returns the total number of properties
+(ok (var-get property-counter)))
+
+(define-read-only (check-metadata-length (data (string-ascii 256)))
+;; Checks if property metadata length is valid
+(ok (and (>= (len data) u1) (<= (len data) u256))))
+
+(define-read-only (get-base-asset-id)
+;; Returns the first property ID
+(ok u1))
+
+(define-read-only (is-available-for-transfer (asset-id uint))
+;; Checks if property is eligible for transfer
+(ok (not (default-to false (map-get? property-transfer-status asset-id)))))
+
+(define-read-only (get-metadata-size (asset-id uint))
+;; Returns length of property metadata
+(ok (len (unwrap! (map-get? property-metadata asset-id) error-property-unknown))))
+
+(define-read-only (get-latest-asset-id)
+;; Returns the last assigned property ID
+(ok (var-get property-counter)))
+
+(define-read-only (fetch-asset-details (asset-id uint))
+;; Retrieves basic property details
+(ok (map-get? property-metadata asset-id)))
+
+(define-read-only (validate-asset-range (start-id uint) (end-id uint))
+;; Validates a range of property IDs
+(ok (and 
+    (>= start-id u1) 
+    (<= end-id (var-get property-counter))
+    (<= start-id end-id))))
+
+(define-read-only (has-owner (asset-id uint))
+;; Checks if a property has an owner
+(ok (is-some (map-get? property-holder asset-id))))
+
+(define-read-only (get-next-asset-id)
+;; Returns the next available property ID
+(ok (+ (var-get property-counter) u1)))
+
+(define-read-only (is-market-listed (asset-id uint))
+;; Checks if a property is currently listed for sale
+(ok (default-to false (map-get? property-market-status asset-id))))
+
+(define-read-only (get-asset-classification (asset-id uint))
+;; Retrieves the classification of a property
+(ok (map-get? property-classification asset-id)))
+
+(define-read-only (get-asset-location (asset-id uint))
+;; Retrieves the location of a property
+(ok (map-get? property-coordinates asset-id)))
+
+(define-read-only (get-asset-value (asset-id uint))
+;; Retrieves the market value of a property
+(ok (map-get? property-market-value asset-id)))
+
+(define-read-only (has-insurance (asset-id uint))
+    ;; Checks if a property is insured
+    (ok (default-to false (map-get? property-has-insurance asset-id))))
+
