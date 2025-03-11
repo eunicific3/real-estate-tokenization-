@@ -101,3 +101,132 @@
     uint)
 ;; Historical property valuations
 
+;; -------------------------------
+;; Private Helper Functions
+;; -------------------------------
+
+(define-private (verify-ownership (asset-id uint) (address principal))
+    ;; Verifies that the address is the current owner of the property
+    (is-eq address (unwrap! (map-get? property-holder asset-id) false)))
+
+(define-private (validate-metadata (metadata (string-ascii 256)))
+    ;; Ensures that property metadata is valid (non-empty and within size limits)
+    (let ((content-length (len metadata)))
+        (and (>= content-length u1)
+             (<= content-length u256))))
+
+(define-private (create-property-record (metadata (string-ascii 256)))
+    ;; Creates a new property record with a unique ID and stores its metadata
+    (let ((asset-id (+ (var-get property-counter) u1)))
+        (asserts! (validate-metadata metadata) error-property-metadata-invalid)
+        (try! (nft-mint? real-estate-asset asset-id tx-sender))
+        (map-set property-metadata asset-id metadata)
+        (map-set property-holder asset-id tx-sender)
+        (var-set property-counter asset-id)
+        (ok asset-id)))
+
+;; -------------------------------
+;; Property Registration Functions
+;; -------------------------------
+
+(define-public (register-new-property (metadata (string-ascii 256)))
+    ;; Registers a new property (admin only)
+    (begin
+        (asserts! (is-eq tx-sender admin-address) error-admin-only)
+        (asserts! (validate-metadata metadata) error-property-metadata-invalid)
+        (create-property-record metadata)))
+
+(define-public (register-multiple-properties 
+(property-descriptions (list 10 (string-ascii 256))))
+;; Enables bulk registration of properties (admin only)
+(begin
+    (asserts! (is-eq tx-sender admin-address) error-admin-only)
+    (let ((registration-results 
+        (map create-property-record property-descriptions)))
+        (ok registration-results))))
+
+;; -------------------------------
+;; Property Transfer Functions
+;; -------------------------------
+
+(define-public (execute-property-transfer (asset-id uint) (new-owner principal))
+    ;; Transfers property ownership to a new owner
+    (begin
+        (let ((current-owner (unwrap! (map-get? property-holder asset-id) error-property-unknown)))
+            (asserts! (is-eq tx-sender current-owner) error-unauthorized-property-action)
+
+            (let ((is-locked (default-to false (map-get? property-transfer-status asset-id))))
+                (asserts! (not is-locked) error-property-locked))
+
+            (asserts! (is-eq new-owner new-owner) error-recipient-invalid)
+            (map-set property-holder asset-id new-owner)
+            (map-set property-transfer-status asset-id true)
+            (ok true))))
+
+(define-public (lock-property-transfers (asset-id uint))
+;; Prevents further transfers of a property
+(begin
+    (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+    (map-set property-transfer-status asset-id true)
+    (ok true)))
+
+(define-public (unlock-property-transfers (asset-id uint))
+;; Enables transfers for a previously locked property
+(begin
+    (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+    (map-set property-transfer-status asset-id false)
+    (map-set property-market-status asset-id true)
+    (ok true)))
+
+;; -------------------------------
+;; Property Listing Functions
+;; -------------------------------
+
+(define-public (publish-property-listing (asset-id uint))
+    ;; Makes a property available for sale
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (map-set property-market-status asset-id true)
+        (ok true)))
+
+(define-public (withdraw-property-listing (asset-id uint))
+    ;; Removes property from market
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (map-set property-market-status asset-id false)
+        (ok true)))
+
+(define-public (remove-from-marketplace (asset-id uint))
+;; Removes a property from the marketplace
+(begin
+    (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+    (map-set property-market-status asset-id false)
+    (ok true)))
+
+;; -------------------------------
+;; Property Data Management Functions
+;; -------------------------------
+
+(define-public (update-property-metadata (asset-id uint) (metadata (string-ascii 256)))
+    ;; Updates the metadata for an existing property
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (asserts! (validate-metadata metadata) error-property-metadata-invalid)
+        (map-set property-metadata asset-id metadata)
+        (ok true)))
+
+(define-public (set-property-classification (asset-id uint) (classification (string-ascii 50)))
+;; Assigns a classification to a property
+(begin
+    (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+    (asserts! (>= (len classification) u1) error-property-metadata-invalid)
+    (map-set property-classification asset-id classification)
+    (ok true)))
+
+(define-public (set-property-coordinates (asset-id uint) (location (string-ascii 100)))
+;; Sets the location details for a property
+(begin
+    (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+    (asserts! (>= (len location) u1) error-property-metadata-invalid)
+    (map-set property-coordinates asset-id location)
+    (ok true)))
