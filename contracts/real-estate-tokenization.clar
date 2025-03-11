@@ -281,3 +281,84 @@
     ;; Retrieves the owner address for a property
     (ok (map-get? property-holder asset-id)))
 
+(define-public (remove-from-transfer-whitelist (asset-id uint))
+    ;; Removes a property from the transfer whitelist
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (map-set property-transfer-whitelist {asset-id: asset-id, authorized-buyer: tx-sender} false)
+        (ok true)))
+
+(define-public (secure-property (asset-id uint))
+;; Locks a property to prevent modifications
+(begin
+    (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+    (map-set property-transfer-status asset-id true)
+    (map-set property-market-status asset-id false)
+    (ok true)))
+
+;; -------------------------------
+;; Property Feature Functions
+;; -------------------------------
+
+(define-public (submit-property-vote 
+    (asset-id uint) 
+    (motion-id uint) 
+    (support bool))
+    ;; Creates a voting mechanism for property decisions
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok support)))
+
+(define-public (plan-maintenance 
+    (asset-id uint) 
+    (service-date uint))
+    ;; Schedules maintenance for properties
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok service-date)))
+
+(define-public (establish-rental-agreement 
+    (asset-id uint) 
+    (renter principal) 
+    (term-length uint))
+    ;; Creates rental agreements for properties
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok term-length)))
+
+(define-public (record-valuation 
+    (asset-id uint) 
+    (appraisal-amount uint) 
+    (record-date uint))
+    ;; Tracks historical property valuations
+    (begin
+        (asserts! (is-eq tx-sender admin-address) error-admin-only)
+        (ok appraisal-amount)))
+
+(define-public (file-property-dispute 
+    (asset-id uint) 
+    (claimant principal) 
+    (claim-details (string-ascii 256)))
+    ;; Handles property-related disputes
+    (begin
+        (asserts! (validate-metadata claim-details) error-property-metadata-invalid)
+        (ok true)))
+
+(define-public (assign-access-rights 
+    (asset-id uint) 
+    (grantee principal) 
+    (permission-level uint))
+    ;; Manages access levels for different users
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok permission-level)))
+
+(define-public (process-insurance-claim 
+    (asset-id uint) 
+    (amount uint) 
+    (claim-details (string-ascii 256)))
+    ;; Processes property insurance claims
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok amount)))
+
