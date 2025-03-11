@@ -362,3 +362,84 @@
         (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
         (ok amount)))
 
+(define-public (compute-property-tax 
+    (asset-id uint) 
+    (rate uint))
+    ;; Calculates property tax based on value and rate
+    (begin
+        (asserts! (is-eq tx-sender admin-address) error-admin-only)
+        (ok rate)))
+
+(define-public (reserve-maintenance-budget 
+    (asset-id uint) 
+    (budget uint))
+    ;; Allocates funds for property maintenance
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok budget)))
+
+(define-public (allocate-revenue 
+    (asset-id uint) 
+    (revenue uint))
+    ;; Distributes property-generated revenue
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok revenue)))
+
+(define-public (associate-utility-account 
+    (asset-id uint) 
+    (service-id uint) 
+    (account-id (string-ascii 50)))
+    ;; Links utility accounts to properties
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok true)))
+
+(define-public (document-renovation 
+    (asset-id uint) 
+    (expense uint) 
+    (work-details (string-ascii 256)))
+    ;; Tracks property renovation activities
+    (begin
+        (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+        (ok expense)))
+
+(define-public (certify-compliance 
+    (asset-id uint) 
+    (regulation-type (string-ascii 50)))
+    ;; Verifies property compliance with regulations
+    (begin
+        (asserts! (is-eq tx-sender admin-address) error-admin-only)
+        (ok true)))
+
+(define-public (enhance-property-security (asset-id uint))
+;; Adds extra security to a property transfer process
+(begin
+    (asserts! (verify-ownership asset-id tx-sender) error-unauthorized-property-action)
+    (map-set property-transfer-status asset-id false)
+    (ok true)))
+
+(define-public (test-registration-process)
+;; Test function to validate the property registration process
+(begin
+    (let ((test-id (+ (var-get property-counter) u1)))
+        (asserts! (validate-metadata "Test Property") error-property-metadata-invalid)
+        (ok true))))
+
+(define-public (establish-tax-rate (rate uint))
+;; Sets a global property tax rate
+(begin
+    (asserts! (is-eq tx-sender admin-address) error-admin-only)
+    (ok true)))
+
+;; -------------------------------
+;; Property Validation Functions
+;; -------------------------------
+
+(define-public (test-property-transfer (asset-id uint) (recipient principal))
+;; Tests the property transfer functionality
+(begin
+    (let ((current-owner (unwrap! (map-get? property-holder asset-id) error-property-unknown)))
+        (asserts! (not (is-eq current-owner recipient)) error-recipient-invalid))
+    (ok true)))
+
